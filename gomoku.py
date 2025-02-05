@@ -1,44 +1,80 @@
-COLUMN_LABEL = [
-    "                         1 1 1 1 1",
-    "     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4",
-    "   +-------------------------------+"]
-GRID_SIZE = [15, 15]
-
-
 def init_board():
-    """Initializes the game board as a 2D array with dimensions 
-    defined by GRID_SIZE. Each cell is initially set to None.
+    """Initializes the game board as a 2D array with user-defined 
+    dimensions. Each cell is initially set to None.
 
     Returns:
         list: A 2D list representing the empty game board.
     """
+
+    initialized = False
+    while(initialized == False):
+        column_input = input("Enter the numbers of columns (< 100): ")
+        row_input = input("Enter the numbers of rows (< 100): ")
+        try:
+            num_columns = int(column_input)
+            num_rows = int(row_input)
+            if(
+                num_columns > 0 and 
+                num_columns < 100 and 
+                num_rows > 0 and
+                num_rows < 100
+                ):
+                initialized = True
+            else:
+                print("Invalid Input! Try Again.")
+
+        except ValueError:
+            print("Type in numbers please!")
+
     board = []
-    for _ in range(GRID_SIZE[0]):
-        board.append([None] * GRID_SIZE[1])
+    for _ in range(num_rows):
+        board.append([None] * num_columns)
     return board
 
 
-def print_board(board):
-    """Displays the current game board in a user-friendly format, 
-    including column and row indices.
+def get_column_label(board):
+    """Generates column labels based on the board size for display
+    purposes.
     
     Args:
         board (list): The current state of the game board.
+
+    Returns:
+        list: A list containing the formatted column labels.
+    """
+    column_label = ["     ", "     ", "   +-"]
+    for index, _ in enumerate(board[0]):
+        if(index < 10):
+            column_label[0] += "  "
+        else:
+            column_label[0] += str(index // 10) + " "
+        column_label[1] += str(index % 10) + " "
+        column_label[2] += "--"
+
+    column_label[2] += "+"
+    return column_label
+ 
+
+
+def print_board(board, column_label):
+    """Displays the current game board with column and row indices.
+    
+    Args:
+        board (list): The current state of the game board.
+        column_label: The column labels including the indices in multiple rows and the upper and downer border
     """
     print(
-        COLUMN_LABEL[0] + 
+        str(column_label[0]) + 
         "\n" + 
-        COLUMN_LABEL[1] + 
+        str(column_label[1]) + 
         "\n" + 
-        COLUMN_LABEL[2]
+        str(column_label[2])
         )
-    row_index = 0
-    for row in board:
+    for index, row in enumerate(board):
         row_string = ""
-        if(row_index < 10):
+        if(index < 10):
             row_string += " "
-        row_string += str(row_index) + " | "
-        row_index += 1
+        row_string += str(index) + " | "
         for cell in row:
             if(cell is None):
                 row_string += ". "
@@ -46,10 +82,10 @@ def print_board(board):
                 row_string += str(cell) + " "
         print(row_string + "|")
 
-    print(COLUMN_LABEL[2] + "\n")
+    print(column_label[2] + "\n")
 
 
-def user_input(player, board):
+def player_move(player, board):
     """Prompts the current player to enter a move (row and column).
     Validates the input to ensure it's within bounds and the selected 
     cell is empty. Only numeric input is accepted.
@@ -59,7 +95,7 @@ def user_input(player, board):
         board (list): The current game board.
 
     Returns:
-        list: The row and column of the selected move as [row, column].
+        list: The coordinates of the selected move as [row, column].
     """
     validation = False
     print(
@@ -75,9 +111,9 @@ def user_input(player, board):
             row = int(row_input)
             if(
                 column >= 0 and 
-                column <= 14 and 
+                column < len(board[0]) and 
                 row >= 0 and 
-                row <= 14 and 
+                row < len(board) and 
                 board[row][column] == None):
                 validation = True
             else:
@@ -91,9 +127,8 @@ def user_input(player, board):
 
 
 def win_detection(last_move, player, board):
-    """Checks whether the current player has won the game.
-    A player wins if they have at least 5 consecutive pieces in a 
-    row, column, or diagonal.
+    """Checks if the current player has won forming a sequence of
+    at least five consecutive pieces in a row, column, or diagonal.
     
     Args:
         last_move (list): The coordinates [row, column] of the last move.
@@ -119,7 +154,7 @@ def win_detection(last_move, player, board):
         consecutive_pieces += 1
 
     while(
-        highest_row + 1 < GRID_SIZE[0] and 
+        highest_row + 1 < len(board) and 
         board[highest_row + 1][column] == player
         ):
         highest_row += 1
@@ -144,7 +179,7 @@ def win_detection(last_move, player, board):
         consecutive_pieces += 1
     
     while(
-        highest_column + 1 < GRID_SIZE[1] and 
+        highest_column + 1 < len(board[0]) and 
         board[row][highest_column + 1] == player
         ):
         highest_column += 1
@@ -170,8 +205,8 @@ def win_detection(last_move, player, board):
         consecutive_pieces += 1
 
     while(
-        highest_row + 1 < GRID_SIZE[0] and 
-        highest_column + 1 < GRID_SIZE[1] and 
+        highest_row + 1 < len(board) and 
+        highest_column + 1 < len(board[0]) and 
         board[highest_row + 1][highest_column + 1] == player
         ):
         highest_row += 1
@@ -193,7 +228,7 @@ def win_detection(last_move, player, board):
 
     while(
         lowest_row - 1 >= 0 and 
-        highest_column + 1 < GRID_SIZE[1] and 
+        highest_column + 1 < len(board[0]) and 
         board[lowest_row - 1][highest_column + 1] == player
         ):
         lowest_row -= 1
@@ -201,7 +236,7 @@ def win_detection(last_move, player, board):
         consecutive_pieces += 1
 
     while(
-        highest_row + 1 < GRID_SIZE[0] and 
+        highest_row + 1 < len(board) and 
         lowest_column - 1 >= 0 and 
         board[highest_row + 1][lowest_column - 1] == player
         ):
@@ -226,19 +261,20 @@ def main():
     turn_count = 0
     game_over = False
     board = init_board()
+    column_label = get_column_label(board)
 
     while(game_over == False):
         turn_count += 1
-        print_board(board)
-        last_move = user_input(player, board)
-        if(turn_count > GRID_SIZE[0] * GRID_SIZE[1]):
+        print_board(board, column_label)
+        last_move = player_move(player, board)
+        if(turn_count > len(board) * len(board[0])):
             print("TIE!")
             game_over = True
         if(turn_count >= 9):
             streak = win_detection(last_move, player, board)
             if(streak != None):
                 game_over = True
-                print_board(board)
+                print_board(board, column_label)
                 print(
                     player + 
                     " wins! (" + 
